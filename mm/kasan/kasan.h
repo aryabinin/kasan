@@ -13,6 +13,12 @@
 #define KASAN_KMALLOC_FREE      0xFB  /* object was freed (kmem_cache_free/kfree) */
 #define KASAN_SHADOW_GAP        0xF9  /* address belongs to shadow memory */
 
+/* Stack redzones */
+#define KASAN_STACK_LEFT        0xF1
+#define KASAN_STACK_MID         0xF2
+#define KASAN_STACK_RIGHT       0xF3
+#define KASAN_STACK_PARTIAL     0xF4
+
 struct access_info {
 	unsigned long access_addr;
 	unsigned long first_bad_addr;
@@ -43,11 +49,13 @@ static __always_inline void kasan_report(unsigned long addr,
 	if (likely(!kasan_enabled()))
 		return;
 
+	kasan_disable_local();
 	info.access_addr = addr;
 	info.access_size = size;
 	info.is_write = is_write;
 	info.ip = _RET_IP_;
 	kasan_report_error(&info);
+	kasan_enable_local();
 }
 
 
